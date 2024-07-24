@@ -14,28 +14,71 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late FixedExtentScrollController _hoursController;
   late FixedExtentScrollController _minutesController;
-  int _currentHourIndex = 0;
-  int _currentMinuteIndex = 0;
+  final TextEditingController _contentController = TextEditingController();
   bool isSnoozeEnabled = true;
+  DateTime time = DateTime.now();
+  late int _currentHourIndex;
+  late int _currentMinuteIndex;
 
   @override
   void initState() {
     super.initState();
-    // Initialize controllers
-    _hoursController = FixedExtentScrollController();
-    _minutesController = FixedExtentScrollController();
+    _currentHourIndex = time.hour;
+    _currentMinuteIndex = time.minute;
+    _hoursController =
+        FixedExtentScrollController(initialItem: _currentHourIndex);
+    _minutesController =
+        FixedExtentScrollController(initialItem: _currentMinuteIndex);
 
-    // Add listeners to track the selected item index
     _hoursController.addListener(() {
       setState(() {
         _currentHourIndex = _hoursController.selectedItem;
+        time = DateTime(
+            time.year, time.month, time.day, _currentHourIndex, time.minute);
       });
     });
 
     _minutesController.addListener(() {
       setState(() {
         _currentMinuteIndex = _minutesController.selectedItem;
+        time = DateTime(
+            time.year, time.month, time.day, time.hour, _currentMinuteIndex);
       });
+    });
+  }
+
+  @override
+  void dispose() {
+    _hoursController.dispose();
+    _minutesController.dispose();
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  void _saveReminder() {
+    String content = _contentController.text;
+    int hour = _currentHourIndex;
+    int minute = _currentMinuteIndex;
+
+    if (content.isEmpty) {
+      // Show an error message
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Please enter reminder content'),
+      ));
+      return;
+    }
+
+    // Save the reminder (You can customize this to save in your database or any storage)
+    print('Reminder set for $hour:$minute with content: $content at $time');
+
+    // Clear the fields after saving
+    _contentController.clear();
+    setState(() {
+      time = DateTime.now();
+      _hoursController.jumpToItem(time.hour);
+      _minutesController.jumpToItem(time.minute);
+      _currentHourIndex = time.hour;
+      _currentMinuteIndex = time.minute;
     });
   }
 
@@ -50,7 +93,6 @@ class _HomePageState extends State<HomePage> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Background for the focused row
                 Positioned.fill(
                   child: Align(
                     alignment: Alignment.center,
@@ -58,13 +100,11 @@ class _HomePageState extends State<HomePage> {
                       height: 50,
                       decoration: BoxDecoration(
                         color: Colors.grey[800],
-                        borderRadius:
-                            BorderRadius.circular(12), // Add border radius here
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
                 ),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -140,6 +180,7 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 children: [
                   TextField(
+                    controller: _contentController,
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       filled: true,
@@ -148,13 +189,13 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
-                      hintText: 'Enter text',
+                      hintText: 'Enter text here',
                       hintStyle: TextStyle(color: Colors.grey[500]),
                     ),
                   ),
                   Divider(color: Colors.grey[700], thickness: 1),
                   ListTile(
-                    title: Text("Repeat"),
+                    title: Text("Repeat daily"),
                     textColor: Colors.white,
                     trailing: Switch(
                       activeColor: Colors.white,
@@ -179,9 +220,7 @@ class _HomePageState extends State<HomePage> {
               height: 55,
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // Handle delete alarm
-                },
+                onPressed: _saveReminder,
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey[800],
                     shape: RoundedRectangleBorder(
