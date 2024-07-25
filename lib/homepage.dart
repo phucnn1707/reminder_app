@@ -1,8 +1,12 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:reminder_app/notification_helper.dart';
 import 'hours.dart';
 import 'minutes.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -19,16 +23,32 @@ class _HomePageState extends State<HomePage> {
   DateTime time = DateTime.now();
   late int _currentHourIndex;
   late int _currentMinuteIndex;
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   @override
   void initState() {
     super.initState();
+    WidgetsFlutterBinding.ensureInitialized();
+    tz.initializeTimeZones();
     _currentHourIndex = time.hour;
     _currentMinuteIndex = time.minute;
     _hoursController =
         FixedExtentScrollController(initialItem: _currentHourIndex);
     _minutesController =
         FixedExtentScrollController(initialItem: _currentMinuteIndex);
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+    var initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    var initializationSettingsIOS = DarwinInitializationSettings();
+    var initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
     _hoursController.addListener(() {
       setState(() {
@@ -55,23 +75,41 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  void _saveReminder() {
+  Future<void> _saveReminder() async {
     String content = _contentController.text;
     int hour = _currentHourIndex;
     int minute = _currentMinuteIndex;
 
     if (content.isEmpty) {
-      // Show an error message
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Please enter reminder content'),
       ));
       return;
     }
 
-    // Save the reminder (You can customize this to save in your database or any storage)
+    DateTime scheduledTime =
+        DateTime(time.year, time.month, time.day, hour, minute);
+
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'Reminder Notifications',
+      'Channel for reminder notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    var iOSPlatformChannelSpecifics = DarwinNotificationDetails();
+    var platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iOSPlatformChannelSpecifics,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(0, 'Reminder', content,
+        tz.TZDateTime.from(scheduledTime, tz.local), platformChannelSpecifics,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
+
     print('Reminder set for $hour:$minute with content: $content at $time');
 
-    // Clear the fields after saving
     _contentController.clear();
     setState(() {
       time = DateTime.now();
