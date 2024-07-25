@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:reminder_app/notification_helper.dart';
+import 'package:workmanager/workmanager.dart';
 import 'hours.dart';
 import 'minutes.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -24,11 +26,11 @@ class _HomePageState extends State<HomePage> {
   late int _currentHourIndex;
   late int _currentMinuteIndex;
   late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  // late FlutterTts flutterTts;
 
   @override
   void initState() {
     super.initState();
-    WidgetsFlutterBinding.ensureInitialized();
     tz.initializeTimeZones();
     _currentHourIndex = time.hour;
     _currentMinuteIndex = time.minute;
@@ -49,6 +51,7 @@ class _HomePageState extends State<HomePage> {
       iOS: initializationSettingsIOS,
     );
     flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    // flutterTts = FlutterTts();
 
     _hoursController.addListener(() {
       setState(() {
@@ -75,6 +78,13 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  // Future<void> speak(String text) async {
+  //   await flutterTts.setLanguage('en-US');
+  //   await flutterTts.setPitch(1.0);
+  //   await flutterTts.setSpeechRate(0.5);
+  //   await flutterTts.speak(text);
+  // }
+
   Future<void> _saveReminder() async {
     String content = _contentController.text;
     int hour = _currentHourIndex;
@@ -90,13 +100,24 @@ class _HomePageState extends State<HomePage> {
     DateTime scheduledTime =
         DateTime(time.year, time.month, time.day, hour, minute);
 
+    if (scheduledTime.isBefore(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('The scheduled time is not valid. Please choose again.'),
+      ));
+      return;
+    }
+
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'Reminder Notifications',
-      'Channel for reminder notifications',
+      'reminder_notifications5',
+      'Channel for reminder_notifications5',
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('notification'),
       importance: Importance.max,
       priority: Priority.high,
     );
-    var iOSPlatformChannelSpecifics = DarwinNotificationDetails();
+    var iOSPlatformChannelSpecifics = DarwinNotificationDetails(
+      sound: 'notification.aiff',
+    );
     var platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
       iOS: iOSPlatformChannelSpecifics,
@@ -107,6 +128,18 @@ class _HomePageState extends State<HomePage> {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
+
+    int notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    Duration duration = scheduledTime.difference(DateTime.now());
+    Workmanager().registerOneOffTask(
+      notificationId.toString(),
+      "reminderTask",
+      inputData: {'content': content},
+      initialDelay: duration,
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+    );
 
     print('Reminder set for $hour:$minute with content: $content at $time');
 
