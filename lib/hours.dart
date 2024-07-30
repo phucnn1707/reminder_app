@@ -16,7 +16,7 @@ class MyHours extends StatelessWidget {
           child: Text(
             hours < 10 ? '0' + hours.toString() : hours.toString(),
             style: TextStyle(
-              fontSize: 30,
+              fontSize: 24,
               color: Colors.white,
             ),
           ),

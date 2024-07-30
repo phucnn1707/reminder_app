@@ -16,7 +16,7 @@ class MyMinutes extends StatelessWidget {
           child: Text(
             mins < 10 ? '0' + mins.toString() : mins.toString(),
             style: TextStyle(
-              fontSize: 30,
+              fontSize: 24,
               color: Colors.white,
             ),
           ),
