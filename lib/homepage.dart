@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
 
     _hoursController.addListener(() {
       setState(() {
-        _currentHourIndex = _hoursController.selectedItem;
+        _currentHourIndex = _hoursController.selectedItem % 24;
         time = DateTime(
             time.year, time.month, time.day, _currentHourIndex, time.minute);
       });
@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
 
     _minutesController.addListener(() {
       setState(() {
-        _currentMinuteIndex = _minutesController.selectedItem;
+        _currentMinuteIndex = _minutesController.selectedItem % 60;
         time = DateTime(
             time.year, time.month, time.day, time.hour, _currentMinuteIndex);
       });
@@ -93,6 +93,7 @@ class _HomePageState extends State<HomePage> {
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Please enter reminder content'),
+        backgroundColor: Color(0xFFFFC005),
       ));
       return;
     }
@@ -103,6 +104,7 @@ class _HomePageState extends State<HomePage> {
     if (scheduledTime.isBefore(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('The scheduled time is not valid. Please choose again.'),
+        backgroundColor: Color(0xFFFFC005),
       ));
       return;
     }
@@ -149,6 +151,7 @@ class _HomePageState extends State<HomePage> {
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Reminder set successfully!'),
+      backgroundColor: Color(0xFF30D158),
     ));
 
     print('Reminder set for $hour:$minute with content: $content at $time');
