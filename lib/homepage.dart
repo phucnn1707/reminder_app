@@ -147,6 +147,10 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Reminder set successfully!'),
+    ));
+
     print('Reminder set for $hour:$minute with content: $content at $time');
 
     _contentController.clear();
