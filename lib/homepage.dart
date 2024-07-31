@@ -92,7 +92,7 @@ class _HomePageState extends State<HomePage> {
 
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Please enter reminder content'),
+        content: Text('Please enter reminder content!'),
         backgroundColor: Color(0xFFFFC005),
       ));
       return;
@@ -103,7 +103,7 @@ class _HomePageState extends State<HomePage> {
 
     if (scheduledTime.isBefore(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('The scheduled time is not valid. Please choose again.'),
+        content: Text('The scheduled time is not valid! Please choose again.'),
         backgroundColor: Color(0xFFFFC005),
       ));
       return;
@@ -186,7 +186,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -211,9 +211,9 @@ class _HomePageState extends State<HomePage> {
                         width: 60,
                         child: ListWheelScrollView.useDelegate(
                           controller: _hoursController,
-                          squeeze: 1.8,
+                          squeeze: 1.9,
                           itemExtent: 50,
-                          perspective: 0.002,
+                          perspective: 0.003,
                           diameterRatio: 1,
                           overAndUnderCenterOpacity: .2,
                           physics: FixedExtentScrollPhysics(),
@@ -239,9 +239,9 @@ class _HomePageState extends State<HomePage> {
                         width: 60,
                         child: ListWheelScrollView.useDelegate(
                           controller: _minutesController,
-                          squeeze: 1.8,
+                          squeeze: 1.9,
                           itemExtent: 50,
-                          perspective: 0.002,
+                          perspective: 0.003,
                           diameterRatio: 1,
                           overAndUnderCenterOpacity: .2,
                           physics: FixedExtentScrollPhysics(),
@@ -262,7 +262,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
@@ -306,7 +306,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.fromLTRB(18, 32, 18, 0),
               child: SizedBox(
                 height: 45,
                 width: double.infinity,
