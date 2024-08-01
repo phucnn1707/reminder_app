@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:reminder_app/edit_alarm.dart';
 import 'package:reminder_app/notification_helper.dart';
 import 'package:workmanager/workmanager.dart';
 import 'hours.dart';
@@ -26,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   late int _currentHourIndex;
   late int _currentMinuteIndex;
   late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  int? _notificationId;
   // late FlutterTts flutterTts;
 
   @override
@@ -85,7 +87,7 @@ class _HomePageState extends State<HomePage> {
   //   await flutterTts.speak(text);
   // }
 
-  Future<void> _saveReminder() async {
+  Future<bool> _saveReminder() async {
     String content = _contentController.text;
     int hour = _currentHourIndex;
     int minute = _currentMinuteIndex;
@@ -95,7 +97,7 @@ class _HomePageState extends State<HomePage> {
         content: Text('Please enter reminder content!'),
         backgroundColor: Color(0xFFFFC005),
       ));
-      return;
+      return false;
     }
 
     DateTime scheduledTime =
@@ -106,7 +108,12 @@ class _HomePageState extends State<HomePage> {
         content: Text('The scheduled time is not valid! Please choose again.'),
         backgroundColor: Color(0xFFFFC005),
       ));
-      return;
+      return false;
+    }
+
+    if (_notificationId != null) {
+      await flutterLocalNotificationsPlugin.cancel(_notificationId!);
+      Workmanager().cancelByUniqueName(_notificationId.toString());
     }
 
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
@@ -125,10 +132,11 @@ class _HomePageState extends State<HomePage> {
       iOS: iOSPlatformChannelSpecifics,
     );
 
-    int notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    _notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    // int notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-        notificationId,
+        _notificationId!,
         'Reminder',
         content,
         tz.TZDateTime.from(scheduledTime, tz.local),
@@ -139,7 +147,7 @@ class _HomePageState extends State<HomePage> {
 
     Duration duration = scheduledTime.difference(DateTime.now());
     Workmanager().registerOneOffTask(
-      notificationId.toString(),
+      _notificationId.toString(),
       "reminderTask",
       inputData: {'content': content},
       backoffPolicy: BackoffPolicy.exponential,
@@ -156,14 +164,57 @@ class _HomePageState extends State<HomePage> {
 
     print('Reminder set for $hour:$minute with content: $content at $time');
 
-    _contentController.clear();
-    setState(() {
-      time = DateTime.now();
-      _hoursController.jumpToItem(time.hour);
-      _minutesController.jumpToItem(time.minute);
-      _currentHourIndex = time.hour;
-      _currentMinuteIndex = time.minute;
-    });
+    // _contentController.clear();
+    // setState(() {
+    //   time = DateTime.now();
+    //   _hoursController.jumpToItem(time.hour);
+    //   _minutesController.jumpToItem(time.minute);
+    //   _currentHourIndex = time.hour;
+    //   _currentMinuteIndex = time.minute;
+    // });
+
+    return true;
+  }
+
+  void _navigateToDisplayPage() async {
+    bool isSaved = await _saveReminder();
+    if (isSaved) {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DisplayPage(
+            content: _contentController.text,
+            time: DateTime(time.year, time.month, time.day, _currentHourIndex,
+                _currentMinuteIndex),
+            notificationId: _notificationId!,
+          ),
+        ),
+      );
+
+      if (result != null && result['edit'] == true) {
+        _contentController.text = result['content'];
+        DateTime savedTime = result['time'];
+        _notificationId = result['notificationId'];
+        setState(() {
+          _currentHourIndex = savedTime.hour;
+          _currentMinuteIndex = savedTime.minute;
+          time = savedTime;
+          _hoursController.jumpToItem(_currentHourIndex);
+          _minutesController.jumpToItem(_currentMinuteIndex);
+        });
+      } else {
+        // Clear the content and reset the time
+        _contentController.clear();
+        setState(() {
+          time = DateTime.now();
+          _currentHourIndex = time.hour;
+          _currentMinuteIndex = time.minute;
+          _hoursController.jumpToItem(_currentHourIndex);
+          _minutesController.jumpToItem(_currentMinuteIndex);
+        });
+        _notificationId = null;
+      }
+    }
   }
 
   @override
@@ -311,7 +362,7 @@ class _HomePageState extends State<HomePage> {
                 height: 45,
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _saveReminder,
+                  onPressed: _navigateToDisplayPage,
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF2C2C2E),
                       shape: RoundedRectangleBorder(
