@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:reminder_app/homepage.dart';
 import 'dart:async';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DisplayPage extends StatefulWidget {
   final String content;
@@ -24,19 +27,49 @@ class _DisplayPageState extends State<DisplayPage> {
     _startTimer();
   }
 
+  @override
+  void dispose() {
+    _timer.cancel();
+    _saveData();
+    super.dispose();
+  }
+
   void _startTimer() {
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (DateTime.now().isAfter(widget.time)) {
         _timer.cancel();
-        Navigator.pop(context, {'edit': false});
+        _clearData(); // Clear data before editing
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context, {
+            'edit': false,
+          });
+        } else {
+          _clearData();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(),
+            ),
+          );
+        }
       }
     });
   }
 
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
+  // Method to save data using shared_preferences
+  void _saveData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('content', widget.content);
+    await prefs.setString('time', widget.time.toIso8601String());
+    await prefs.setInt('notificationId', widget.notificationId);
+  }
+
+  // Method to clear shared_preferences when editing
+  void _clearData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('content');
+    await prefs.remove('time');
+    await prefs.remove('notificationId');
   }
 
   @override
@@ -73,12 +106,22 @@ class _DisplayPageState extends State<DisplayPage> {
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context, {
-                  'edit': true,
-                  'content': widget.content,
-                  'time': widget.time,
-                  'notificationId': widget.notificationId
-                });
+                _clearData(); // Clear data before editing
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context, {
+                    'edit': true,
+                    'content': widget.content,
+                    'time': widget.time,
+                    'notificationId': widget.notificationId,
+                  });
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HomePage(),
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF2C2C2E),

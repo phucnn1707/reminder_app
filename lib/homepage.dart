@@ -5,6 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:reminder_app/edit_alarm.dart';
 import 'package:reminder_app/notification_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 import 'hours.dart';
 import 'minutes.dart';
@@ -78,6 +79,16 @@ class _HomePageState extends State<HomePage> {
     _minutesController.dispose();
     _contentController.dispose();
     super.dispose();
+  }
+
+  // Method to save state using shared_preferences
+  Future<void> _saveState() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('content', _contentController.text);
+    await prefs.setString('time', time.toIso8601String());
+    if (_notificationId != null) {
+      await prefs.setInt('notificationId', _notificationId!);
+    }
   }
 
   // Future<void> speak(String text) async {
@@ -156,6 +167,8 @@ class _HomePageState extends State<HomePage> {
         networkType: NetworkType.connected,
       ),
     );
+
+    await _saveState();
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Reminder set successfully!'),
