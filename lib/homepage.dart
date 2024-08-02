@@ -34,6 +34,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _loadSavedData();
     tz.initializeTimeZones();
     _currentHourIndex = time.hour;
     _currentMinuteIndex = time.minute;
@@ -71,6 +72,25 @@ class _HomePageState extends State<HomePage> {
             time.year, time.month, time.day, time.hour, _currentMinuteIndex);
       });
     });
+  }
+
+  Future<void> _loadSavedData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? content = prefs.getString('content');
+    String? timeString = prefs.getString('time');
+    int? notificationId = prefs.getInt('notificationId');
+
+    if (content != null && timeString != null && notificationId != null) {
+      setState(() {
+        _contentController.text = content;
+        time = DateTime.parse(timeString);
+        _currentHourIndex = time.hour;
+        _currentMinuteIndex = time.minute;
+        _notificationId = notificationId;
+      });
+      _hoursController.jumpToItem(_currentHourIndex);
+      _minutesController.jumpToItem(_currentMinuteIndex);
+    }
   }
 
   @override
@@ -121,6 +141,8 @@ class _HomePageState extends State<HomePage> {
       ));
       return false;
     }
+
+    print(_notificationId);
 
     if (_notificationId != null) {
       await flutterLocalNotificationsPlugin.cancel(_notificationId!);

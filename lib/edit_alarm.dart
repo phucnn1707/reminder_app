@@ -38,13 +38,12 @@ class _DisplayPageState extends State<DisplayPage> {
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (DateTime.now().isAfter(widget.time)) {
         _timer.cancel();
-        _clearData(); // Clear data before editing
+        _clearData();
         if (Navigator.canPop(context)) {
           Navigator.pop(context, {
             'edit': false,
           });
         } else {
-          _clearData();
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -100,12 +99,12 @@ class _DisplayPageState extends State<DisplayPage> {
             ),
             SizedBox(height: 10),
             Text(
-              'Time: ${widget.time.hour}:${widget.time.minute}',
+              'Time: ${widget.time.hour.toString().padLeft(2, '0')}:${widget.time.minute.toString().padLeft(2, '0')}',
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
             SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 _clearData(); // Clear data before editing
                 if (Navigator.canPop(context)) {
                   Navigator.pop(context, {
@@ -115,6 +114,7 @@ class _DisplayPageState extends State<DisplayPage> {
                     'notificationId': widget.notificationId,
                   });
                 } else {
+                  _saveData();
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
