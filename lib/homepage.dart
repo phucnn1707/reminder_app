@@ -157,9 +157,12 @@ class _HomePageState extends State<HomePage> {
       importance: Importance.max,
       priority: Priority.high,
     );
+
     var iOSPlatformChannelSpecifics = DarwinNotificationDetails(
       sound: 'notification.aiff',
+      threadIdentifier: 'thread_id'
     );
+
     var platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
       iOS: iOSPlatformChannelSpecifics,
