@@ -3,10 +3,13 @@ import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:reminder_app/back_service.dart';
 import 'package:reminder_app/edit_alarm.dart';
 import 'package:reminder_app/homepage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -41,7 +44,13 @@ void callbackDispatcher() {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  await Permission.notification.isDenied.then((value) {
+    if (value) {
+      Permission.notification.request();
+    }
+  });
+  await InitializeService();
+  // Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? content = prefs.getString('content');
   String? timeString = prefs.getString('time');

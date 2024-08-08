@@ -11,6 +11,7 @@ import 'hours.dart';
 import 'minutes.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:flutter_background_service/flutter_background_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -146,7 +147,8 @@ class _HomePageState extends State<HomePage> {
 
     if (_notificationId != null) {
       await flutterLocalNotificationsPlugin.cancel(_notificationId!);
-      Workmanager().cancelByUniqueName(_notificationId.toString());
+      // Workmanager().cancelByUniqueName(_notificationId.toString());
+      FlutterBackgroundService().invoke('stopService');
     }
 
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
@@ -179,18 +181,20 @@ class _HomePageState extends State<HomePage> {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
 
     Duration duration = scheduledTime.difference(DateTime.now());
-    Workmanager().registerOneOffTask(
-      _notificationId.toString(),
-      "reminderTask",
-      inputData: {'content': content},
-      backoffPolicy: BackoffPolicy.exponential,
-      initialDelay: duration,
-      constraints: Constraints(
-        networkType: NetworkType.connected,
-      ),
-    );
-
+    // Workmanager().registerOneOffTask(
+    //   _notificationId.toString(),
+    //   "reminderTask",
+    //   inputData: {'content': content},
+    //   backoffPolicy: BackoffPolicy.exponential,
+    //   initialDelay: duration,
+    //   constraints: Constraints(
+    //     networkType: NetworkType.connected,
+    //   ),
+    // );
     await _saveState();
+
+    FlutterBackgroundService().startService();
+    FlutterBackgroundService().invoke('setAsForeground');
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('Reminder set successfully!'),
