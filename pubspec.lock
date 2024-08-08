@@ -103,7 +103,7 @@ packages:
     source: hosted
     version: "5.0.7"
   flutter_background_service_android:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_background_service_android
       sha256: fe06c4bd719b8ce8512d5724a229526155c1f54f734524b8e43f8212e98384a8
@@ -111,7 +111,7 @@ packages:
     source: hosted
     version: "6.2.4"
   flutter_background_service_ios:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_background_service_ios
       sha256: "45c8aca1e8850e5c45822152b06d5806aba9470517dcd2c291fce8ef99a44d60"

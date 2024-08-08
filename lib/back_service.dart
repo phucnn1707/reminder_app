@@ -3,10 +3,15 @@ import 'dart:developer';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
+import 'package:flutter_background_service_ios/flutter_background_service_ios.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// const MethodChannel _backgroundTaskChannel =
+//     MethodChannel('com.example.reminder_app/background_task');
 
 Future<void> InitializeService() async {
   final service = FlutterBackgroundService();
@@ -31,6 +36,18 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
+
+  // _backgroundTaskChannel.setMethodCallHandler((call) async {
+  //   if (call.method == 'performBackgroundTask') {
+  //     SharedPreferences prefs = await SharedPreferences.getInstance();
+  //     String? content = prefs.getString('content');
+  //     String? timeString = prefs.getString('time');
+  //     if (content != null && timeString != null) {
+  //       DateTime time = DateTime.parse(timeString);
+  //       await performTask(service, content, time); // Passing service instance
+  //     }
+  //   }
+  // });
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? content = prefs.getString('content');
@@ -75,7 +92,7 @@ void onStart(ServiceInstance service) async {
   // });
 }
 
-performTask(ServiceInstance service, String content, DateTime time) async {
+performTask(ServiceInstance? service, String content, DateTime time) async {
   Duration duration = time.difference(DateTime.now());
 
   await Future.delayed(duration);
@@ -86,8 +103,7 @@ performTask(ServiceInstance service, String content, DateTime time) async {
     await flutterTts.setLanguage('en-US');
     await flutterTts.setPitch(1.0);
     await flutterTts.setSpeechRate(0.5);
-    await flutterTts.awaitSpeakCompletion(
-        true); // Ensure the function waits for speech completion
+    await flutterTts.awaitSpeakCompletion(true);
     await flutterTts.speak(text);
   }
 
@@ -101,5 +117,5 @@ performTask(ServiceInstance service, String content, DateTime time) async {
 
   print("foreground service is running with content: " + content!);
 
-  service.stopSelf();
+  service?.stopSelf();
 }
